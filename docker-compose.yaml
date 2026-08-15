@@ -1,0 +1,312 @@
+name: tidaline-case-study
+
+services:
+  # ─────────────────────────────────────────────
+  # Existing services
+  # ─────────────────────────────────────────────
+  kafka:
+    image: confluentinc/cp-kafka:7.4.0
+    container_name: kafka
+    hostname: kafka
+    ports:
+      - "9092:9092"
+    environment:
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:29093
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,INTERNAL:PLAINTEXT,HOST:PLAINTEXT
+      KAFKA_LISTENERS: CONTROLLER://0.0.0.0:29093,INTERNAL://0.0.0.0:29092,HOST://0.0.0.0:9092
+      KAFKA_ADVERTISED_LISTENERS: INTERNAL://kafka:29092,HOST://localhost:9092
+      KAFKA_INTER_BROKER_LISTENER_NAME: INTERNAL
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+      CLUSTER_ID: MkU3OEVBNTcwNTJENDM2Qk
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "kafka-topics --bootstrap-server localhost:9092 --list >/dev/null 2>&1",
+        ]
+      interval: 10s
+      timeout: 10s
+      retries: 12
+      start_period: 20s
+    volumes:
+      - kafka_kraft_data:/var/lib/kafka/data
+    networks:
+      - case-study-network
+
+  postgres:
+    image: postgres:15
+    container_name: postgres
+    hostname: postgres
+    ports:
+      - "7432:5432"
+    environment:
+      POSTGRES_DB: maritime_logistics
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    command:
+      [
+        "postgres",
+        "-c",
+        "wal_level=logical",
+        "-c",
+        "max_replication_slots=10",
+        "-c",
+        "max_wal_senders=10",
+      ]
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U postgres -d maritime_logistics -h localhost",
+        ]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./stream/create_earthquakes.sql:/docker-entrypoint-initdb.d/01-earthquakes.sql:ro
+    restart: unless-stopped
+    networks:
+      - case-study-network
+
+  stream_extractor:
+    build:
+      context: ./stream
+      dockerfile: Dockerfile
+    container_name: stream_extractor
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: maritime_logistics
+      DB_USER: postgres
+      DB_PASSWORD: postgres
+      RETRY_SECONDS: 10
+      LOG_LEVEL: INFO
+    restart: unless-stopped
+    networks:
+      - case-study-network
+
+  kafka-connect:
+    image: debezium/connect:2.5
+    container_name: kafka-connect
+    hostname: kafka-connect
+    depends_on:
+      kafka:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    ports:
+      - "8083:8083"
+    environment:
+      BOOTSTRAP_SERVERS: kafka:29092
+      GROUP_ID: case-study-connect
+      CONFIG_STORAGE_TOPIC: case-study-connect-configs
+      OFFSET_STORAGE_TOPIC: case-study-connect-offsets
+      STATUS_STORAGE_TOPIC: case-study-connect-status
+      CONFIG_STORAGE_REPLICATION_FACTOR: 1
+      OFFSET_STORAGE_REPLICATION_FACTOR: 1
+      STATUS_STORAGE_REPLICATION_FACTOR: 1
+      KEY_CONVERTER: org.apache.kafka.connect.json.JsonConverter
+      VALUE_CONVERTER: org.apache.kafka.connect.json.JsonConverter
+      KEY_CONVERTER_SCHEMAS_ENABLE: "false"
+      VALUE_CONVERTER_SCHEMAS_ENABLE: "false"
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "curl --silent --fail http://localhost:8083/connector-plugins >/dev/null",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 18
+      start_period: 30s
+    restart: unless-stopped
+    networks:
+      - case-study-network
+
+  sftp:
+    image: atmoz/sftp:debian
+    container_name: sftp
+    hostname: sftp
+    ports:
+      - "2222:22"
+    command: batch:batchpass:1001:1001:data
+    volumes:
+      - ./batch/data:/data
+      - ./batch/data:/home/batch/data
+    restart: unless-stopped
+    networks:
+      - case-study-network
+
+  # ─────────────────────────────────────────────
+  # Hadoop HA — coordination
+  # ─────────────────────────────────────────────
+  zoo1:
+    image: zookeeper:3.8
+    container_name: zoo1
+    hostname: zoo1
+    environment:
+      ZOO_MY_ID: 1
+      ZOO_SERVERS: server.1=zoo1:2888:3888;2181
+    networks:
+      - case-study-network
+
+  # ─────────────────────────────────────────────
+  # Hadoop HA — HDFS (JournalNodes + NameNodes + DataNode)
+  # ─────────────────────────────────────────────
+  journalnode1:
+    build:
+      context: ./journalnode
+      dockerfile: Dockerfile
+    container_name: journalnode01
+    hostname: journalnode01
+    env_file: ./hadoop.env
+    volumes:
+      - hadoop_journal1:/hadoop/dfs/journalnode
+    networks:
+      - case-study-network
+
+  journalnode2:
+    build:
+      context: ./journalnode
+      dockerfile: Dockerfile
+    container_name: journalnode02
+    hostname: journalnode02
+    env_file: ./hadoop.env
+    volumes:
+      - hadoop_journal2:/hadoop/dfs/journalnode
+    networks:
+      - case-study-network
+
+  journalnode3:
+    build:
+      context: ./journalnode
+      dockerfile: Dockerfile
+    container_name: journalnode03
+    hostname: journalnode03
+    env_file: ./hadoop.env
+    volumes:
+      - hadoop_journal3:/hadoop/dfs/journalnode
+    networks:
+      - case-study-network
+
+  namenode1:
+    image: bde2020/hadoop-namenode:2.0.0-hadoop3.2.1-java8
+    container_name: namenode1
+    hostname: namenode1
+    environment:
+      CLUSTER_NAME: hdfs-ha
+      ENSURE_NAMENODE_DIR: /hadoop/dfs/name
+    env_file: ./hadoop.env
+    ports:
+      - "9870:9870"
+    volumes:
+      - hadoop_nn1:/hadoop/dfs/name
+    depends_on:
+      - journalnode1
+      - journalnode2
+      - journalnode3
+      - zoo1
+    networks:
+      - case-study-network
+
+  namenode2:
+    image: bde2020/hadoop-namenode:2.0.0-hadoop3.2.1-java8
+    container_name: namenode2
+    hostname: namenode2
+    environment:
+      CLUSTER_NAME: hdfs-ha
+    env_file: ./hadoop.env
+    ports:
+      - "9871:9870"
+    volumes:
+      - hadoop_nn2:/hadoop/dfs/name
+    depends_on:
+      - namenode1
+    networks:
+      - case-study-network
+
+  datanode1:
+    image: bde2020/hadoop-datanode:2.0.0-hadoop3.2.1-java8
+    container_name: datanode1
+    hostname: datanode1
+    env_file: ./hadoop.env
+    volumes:
+      - hadoop_dn1:/hadoop/dfs/data
+    depends_on:
+      - namenode1
+      - namenode2
+    networks:
+      - case-study-network
+
+  # ─────────────────────────────────────────────
+  # Hadoop HA — YARN (ResourceManagers + NodeManager)
+  # ─────────────────────────────────────────────
+  resourcemanager1:
+    image: bde2020/hadoop-resourcemanager:2.0.0-hadoop3.2.1-java8
+    container_name: resourcemanager1
+    hostname: resourcemanager1
+    env_file: ./hadoop.env
+    environment:
+      SERVICE_PRECONDITION: "namenode1:9870 namenode2:9870 datanode1:9864"
+    ports:
+      - "8088:8088"
+    depends_on:
+      - namenode1
+      - namenode2
+      - zoo1
+    networks:
+      - case-study-network
+
+  resourcemanager2:
+    image: bde2020/hadoop-resourcemanager:2.0.0-hadoop3.2.1-java8
+    container_name: resourcemanager2
+    hostname: resourcemanager2
+    env_file: ./hadoop.env
+    environment:
+      SERVICE_PRECONDITION: "namenode1:9870 namenode2:9870 datanode1:9864"
+    ports:
+      - "8089:8088"
+    depends_on:
+      - resourcemanager1
+    networks:
+      - case-study-network
+
+  nodemanager1:
+    image: bde2020/hadoop-nodemanager:2.0.0-hadoop3.2.1-java8
+    container_name: nodemanager1
+    hostname: nodemanager1
+    env_file: ./hadoop.env
+    environment:
+      SERVICE_PRECONDITION: "namenode1:9870 namenode2:9870 datanode1:9864 resourcemanager1:8088 resourcemanager2:8088"
+    depends_on:
+      - resourcemanager1
+      - resourcemanager2
+      - datanode1
+    networks:
+      - case-study-network
+
+networks:
+  case-study-network:
+    name: tidaline-case-study-network
+    driver: bridge
+
+volumes:
+  kafka_kraft_data:
+  postgres_data:
+  hadoop_journal1:
+  hadoop_journal2:
+  hadoop_journal3:
+  hadoop_nn1:
+  hadoop_nn2:
+  hadoop_dn1:

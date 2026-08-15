@@ -1,9 +1,33 @@
 name: tidaline-case-study
 
+# ---------------- Airflow Configs ----------------
+x-airflow-common:
+  &airflow-common
+
+  image: apache/airflow:3.3.0
+
+  environment:
+    AIRFLOW__CORE__EXECUTOR: LocalExecutor
+
+    AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@airflow-db:5432/airflow
+
+    AIRFLOW__CORE__LOAD_EXAMPLES: "false"
+
+    AIRFLOW__CORE__AUTH_MANAGER: airflow.providers.fab.auth_manager.fab_auth_manager.FabAuthManager
+  
+  user: "${AIRFLOW_UID:-50000}:0"
+
+  volumes:
+    - ./airflow/dags:/opt/airflow/dags
+    - ./airflow/logs:/opt/airflow/logs
+    - ./airflow/plugins:/opt/airflow/plugins
+    - ./airflow/config:/opt/airflow/config
+
+  networks:
+    - case-study-network
+
 services:
-  # ─────────────────────────────────────────────
-  # Existing services
-  # ─────────────────────────────────────────────
+  # ---------------- Existing services ----------------
   kafka:
     image: confluentinc/cp-kafka:7.4.0
     container_name: kafka
@@ -147,10 +171,132 @@ services:
     restart: unless-stopped
     networks:
       - case-study-network
+  
+  batch-generator:
+    build:
+      context: ./batch
+      dockerfile: Dockerfile
+    container_name: batch-generator
+    volumes:
+      - ./batch/data:/app/data
+    environment:
+      VESSEL_REQUEST_DELAY: "2"
+    networks:
+      - case-study-network
 
-  # ─────────────────────────────────────────────
-  # Hadoop HA — coordination
-  # ─────────────────────────────────────────────
+  # ---------------- Airflow ----------------
+  airflow-db:
+    image: postgres:15
+    container_name: airflow-db
+    hostname: airflow-db
+    environment:
+      POSTGRES_DB: airflow
+      POSTGRES_USER: airflow
+      POSTGRES_PASSWORD: airflow
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U airflow -d airflow -h localhost",
+        ]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    volumes:
+      - airflow_postgres_data:/var/lib/postgresql/data
+    restart: unless-stopped
+    networks:
+      - case-study-network
+
+  airflow-init:
+    <<: *airflow-common
+
+    container_name: airflow-init
+
+    depends_on:
+      airflow-db:
+        condition: service_healthy
+
+    entrypoint: /bin/bash
+
+    command:
+      - -c
+      - |
+        airflow db migrate &&
+        airflow users create \
+          --username airflow \
+          --password airflow \
+          --firstname Airflow \
+          --lastname Admin \
+          --role Admin \
+          --email airflow@example.com
+
+    restart: "no"
+
+  airflow-scheduler:
+    <<: *airflow-common
+
+    container_name: airflow-scheduler
+
+    depends_on:
+      airflow-init:
+        condition: service_completed_successfully
+
+    command: scheduler
+
+    restart: unless-stopped
+
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "airflow jobs check --job-type SchedulerJob",
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  airflow-dag-processor:
+    <<: *airflow-common
+
+    container_name: airflow-dag-processor
+
+    depends_on:
+      airflow-init:
+        condition: service_completed_successfully
+
+    command: dag-processor
+
+    restart: unless-stopped
+
+  airflow-api-server:
+    <<: *airflow-common
+
+    container_name: airflow-api-server
+
+    depends_on:
+      airflow-init:
+        condition: service_completed_successfully
+
+    ports:
+      - "9000:8080"
+
+    command: api-server
+
+    restart: unless-stopped
+
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "curl --fail http://localhost:8080/api/v2/monitor/health || exit 1",
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+
+  # ---------------- Hadoop HA — coordination ----------------
   zoo1:
     image: zookeeper:3.8
     container_name: zoo1
@@ -161,9 +307,7 @@ services:
     networks:
       - case-study-network
 
-  # ─────────────────────────────────────────────
-  # Hadoop HA — HDFS (JournalNodes + NameNodes + DataNode)
-  # ─────────────────────────────────────────────
+  # ---------------- Hadoop HA — HDFS (JournalNodes + NameNodes + DataNode) ----------------
   journalnode1:
     build:
       context: ./journalnode
@@ -249,9 +393,7 @@ services:
     networks:
       - case-study-network
 
-  # ─────────────────────────────────────────────
-  # Hadoop HA — YARN (ResourceManagers + NodeManager)
-  # ─────────────────────────────────────────────
+  # ---------------- Hadoop HA — YARN (ResourceManagers + NodeManager) ----------------
   resourcemanager1:
     image: bde2020/hadoop-resourcemanager:2.0.0-hadoop3.2.1-java8
     container_name: resourcemanager1
@@ -296,6 +438,8 @@ services:
     networks:
       - case-study-network
 
+
+
 networks:
   case-study-network:
     name: tidaline-case-study-network
@@ -304,6 +448,7 @@ networks:
 volumes:
   kafka_kraft_data:
   postgres_data:
+  airflow_postgres_data:
   hadoop_journal1:
   hadoop_journal2:
   hadoop_journal3:

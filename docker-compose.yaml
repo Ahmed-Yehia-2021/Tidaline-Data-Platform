@@ -157,6 +157,37 @@ services:
     restart: unless-stopped
     networks:
       - case-study-network
+  debezium-setup:
+    image: curlimages/curl:latest
+    container_name: debezium-setup
+    depends_on:
+      kafka-connect:
+        condition: service_healthy
+    networks:
+      - case-study-network
+    command: 
+      - "-c"
+      - |
+        echo "Waiting for Kafka Connect to be ready..."
+        # The depends_on already checks health, but a small sleep ensures the API is ready to accept POST requests
+        sleep 5
+        echo "Sending Debezium configuration..."
+        curl -i -X POST -H "Accept:application/json" -H "Content-Type:application/json" kafka-connect:8083/connectors/ -d '{
+          "name": "earthquakes-connector",
+          "config": {
+            "connector.class": "io.debezium.connector.postgresql.PostgresConnector",
+            "database.hostname": "postgres",
+            "database.port": "5432",
+            "database.user": "postgres",
+            "database.password": "postgres",
+            "database.dbname": "maritime_logistics",
+            "topic.prefix": "maritime_server",
+            "table.include.list": "public.earthquakes",
+            "plugin.name": "pgoutput"
+          }
+        }'
+        echo "Debezium configuration sent!"
+    entrypoint: [ "/bin/sh" ]    
 
   sftp:
     image: atmoz/sftp:debian
@@ -438,6 +469,47 @@ services:
     networks:
       - case-study-network
 
+  # ---------------- Spark Configuration ----------------
+
+  spark-master:
+    image: apache/spark:3.5.3
+    container_name: spark-master
+    hostname: spark-master
+    command: >
+      /opt/spark/bin/spark-class org.apache.spark.deploy.master.Master
+      --host spark-master --port 7077 --webui-port 8080
+    ports:
+      - '8090:8080'
+      - '7071:7077'
+    networks:
+      - case-study-network
+
+  spark-worker:
+    image: apache/spark:3.5.3
+    container_name: spark-worker
+    hostname: spark-worker
+    depends_on:
+      - spark-master
+    command: >
+      /opt/spark/bin/spark-class org.apache.spark.deploy.worker.Worker
+      spark://spark-master:7077
+    environment:
+      SPARK_WORKER_MEMORY: 2G
+      SPARK_WORKER_CORES: 2
+    networks:
+      - case-study-network
+
+  spark-submit:
+    image: apache/spark:3.5.3
+    container_name: spark-submit
+    depends_on:
+      - spark-master
+      - spark-worker
+    volumes:
+      - ./spark-jobs:/opt/spark-jobs
+    networks:
+      - case-study-network
+    entrypoint: ["tail", "-f", "/dev/null"]
 
 
 networks:

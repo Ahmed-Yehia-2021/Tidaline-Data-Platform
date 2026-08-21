@@ -3,26 +3,25 @@ name: tidaline-case-study
 # ---------------- Airflow Configs ----------------
 x-airflow-common:
   &airflow-common
-
   image: apache/airflow:3.3.0
-
   environment:
     AIRFLOW__CORE__EXECUTOR: LocalExecutor
-
     AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@airflow-db:5432/airflow
-
     AIRFLOW__CORE__LOAD_EXAMPLES: "false"
-
     AIRFLOW__CORE__AUTH_MANAGER: airflow.providers.fab.auth_manager.fab_auth_manager.FabAuthManager
-  
   user: "${AIRFLOW_UID:-50000}:0"
-
   volumes:
     - ./airflow/dags:/opt/airflow/dags
     - ./airflow/logs:/opt/airflow/logs
     - ./airflow/plugins:/opt/airflow/plugins
     - ./airflow/config:/opt/airflow/config
+  networks:
+    - case-study-network
 
+# ---------------- Hadoop node template (used by HDFS/YARN daemons) ----------------
+x-hadoop-common:
+  &hadoop-common
+  env_file: ./hadoop.env
   networks:
     - case-study-network
 
@@ -50,11 +49,7 @@ services:
       KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
       CLUSTER_ID: MkU3OEVBNTcwNTJENDM2Qk
     healthcheck:
-      test:
-        [
-          "CMD-SHELL",
-          "kafka-topics --bootstrap-server localhost:9092 --list >/dev/null 2>&1",
-        ]
+      test: ["CMD-SHELL", "kafka-topics --bootstrap-server localhost:9092 --list >/dev/null 2>&1"]
       interval: 10s
       timeout: 10s
       retries: 12
@@ -74,22 +69,9 @@ services:
       POSTGRES_DB: maritime_logistics
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
-    command:
-      [
-        "postgres",
-        "-c",
-        "wal_level=logical",
-        "-c",
-        "max_replication_slots=10",
-        "-c",
-        "max_wal_senders=10",
-      ]
+    command: ["postgres", "-c", "wal_level=logical", "-c", "max_replication_slots=10", "-c", "max_wal_senders=10"]
     healthcheck:
-      test:
-        [
-          "CMD-SHELL",
-          "pg_isready -U postgres -d maritime_logistics -h localhost",
-        ]
+      test: ["CMD-SHELL", "pg_isready -U postgres -d maritime_logistics -h localhost"]
       interval: 5s
       timeout: 5s
       retries: 20
@@ -145,11 +127,7 @@ services:
       KEY_CONVERTER_SCHEMAS_ENABLE: "false"
       VALUE_CONVERTER_SCHEMAS_ENABLE: "false"
     healthcheck:
-      test:
-        [
-          "CMD-SHELL",
-          "curl --silent --fail http://localhost:8083/connector-plugins >/dev/null",
-        ]
+      test: ["CMD-SHELL", "curl --silent --fail http://localhost:8083/connector-plugins >/dev/null"]
       interval: 10s
       timeout: 5s
       retries: 18
@@ -157,6 +135,7 @@ services:
     restart: unless-stopped
     networks:
       - case-study-network
+
   debezium-setup:
     image: curlimages/curl:latest
     container_name: debezium-setup
@@ -165,11 +144,10 @@ services:
         condition: service_healthy
     networks:
       - case-study-network
-    command: 
+    command:
       - "-c"
       - |
         echo "Waiting for Kafka Connect to be ready..."
-        # The depends_on already checks health, but a small sleep ensures the API is ready to accept POST requests
         sleep 5
         echo "Sending Debezium configuration..."
         curl -i -X POST -H "Accept:application/json" -H "Content-Type:application/json" kafka-connect:8083/connectors/ -d '{
@@ -187,7 +165,7 @@ services:
           }
         }'
         echo "Debezium configuration sent!"
-    entrypoint: [ "/bin/sh" ]    
+    entrypoint: [ "/bin/sh" ]
 
   sftp:
     image: atmoz/sftp:debian
@@ -202,7 +180,7 @@ services:
     restart: unless-stopped
     networks:
       - case-study-network
-  
+
   batch-generator:
     build:
       context: ./batch
@@ -225,11 +203,7 @@ services:
       POSTGRES_USER: airflow
       POSTGRES_PASSWORD: airflow
     healthcheck:
-      test:
-        [
-          "CMD-SHELL",
-          "pg_isready -U airflow -d airflow -h localhost",
-        ]
+      test: ["CMD-SHELL", "pg_isready -U airflow -d airflow -h localhost"]
       interval: 5s
       timeout: 5s
       retries: 20
@@ -241,15 +215,11 @@ services:
 
   airflow-init:
     <<: *airflow-common
-
     container_name: airflow-init
-
     depends_on:
       airflow-db:
         condition: service_healthy
-
     entrypoint: /bin/bash
-
     command:
       - -c
       - |
@@ -261,262 +231,346 @@ services:
           --lastname Admin \
           --role Admin \
           --email airflow@example.com
-
     restart: "no"
 
   airflow-scheduler:
     <<: *airflow-common
-
     container_name: airflow-scheduler
-
     depends_on:
       airflow-init:
         condition: service_completed_successfully
-
     command: scheduler
-
     restart: unless-stopped
-
     healthcheck:
-      test:
-        [
-          "CMD-SHELL",
-          "airflow jobs check --job-type SchedulerJob",
-        ]
+      test: ["CMD-SHELL", "airflow jobs check --job-type SchedulerJob"]
       interval: 30s
       timeout: 10s
       retries: 5
 
   airflow-dag-processor:
     <<: *airflow-common
-
     container_name: airflow-dag-processor
-
     depends_on:
       airflow-init:
         condition: service_completed_successfully
-
     command: dag-processor
-
     restart: unless-stopped
 
   airflow-api-server:
     <<: *airflow-common
-
     container_name: airflow-api-server
-
     depends_on:
       airflow-init:
         condition: service_completed_successfully
-
     ports:
       - "9000:8080"
-
     command: api-server
-
     restart: unless-stopped
-
     healthcheck:
-      test:
-        [
-          "CMD-SHELL",
-          "curl --fail http://localhost:8080/api/v2/monitor/health || exit 1",
-        ]
+      test: ["CMD-SHELL", "curl --fail http://localhost:8080/api/v2/monitor/health || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 5
 
-
-  # ---------------- Hadoop HA — coordination ----------------
+  # ---------------- Coordination: 3-node ZooKeeper ensemble ----------------
   zoo1:
     image: zookeeper:3.8
     container_name: zoo1
     hostname: zoo1
     environment:
       ZOO_MY_ID: 1
-      ZOO_SERVERS: server.1=zoo1:2888:3888;2181
+      ZOO_SERVERS: server.1=zoo1:2888:3888;2181 server.2=zoo2:2888:3888;2181 server.3=zoo3:2888:3888;2181
+    healthcheck:
+      test: ["CMD-SHELL", "echo ruok | nc -w 2 localhost 2181 | grep imok"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
     networks:
       - case-study-network
 
-  # ---------------- Hadoop HA — HDFS (JournalNodes + NameNodes + DataNode) ----------------
+  zoo2:
+    image: zookeeper:3.8
+    container_name: zoo2
+    hostname: zoo2
+    environment:
+      ZOO_MY_ID: 2
+      ZOO_SERVERS: server.1=zoo1:2888:3888;2181 server.2=zoo2:2888:3888;2181 server.3=zoo3:2888:3888;2181
+    healthcheck:
+      test: ["CMD-SHELL", "echo ruok | nc -w 2 localhost 2181 | grep imok"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    networks:
+      - case-study-network
+
+  zoo3:
+    image: zookeeper:3.8
+    container_name: zoo3
+    hostname: zoo3
+    environment:
+      ZOO_MY_ID: 3
+      ZOO_SERVERS: server.1=zoo1:2888:3888;2181 server.2=zoo2:2888:3888;2181 server.3=zoo3:2888:3888;2181
+    healthcheck:
+      test: ["CMD-SHELL", "echo ruok | nc -w 2 localhost 2181 | grep imok"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    networks:
+      - case-study-network
+
+  # ---------------- Hadoop HA — HDFS ----------------
   journalnode1:
+    <<: *hadoop-common
     build:
       context: ./journalnode
       dockerfile: Dockerfile
     container_name: journalnode01
     hostname: journalnode01
-    env_file: ./hadoop.env
     volumes:
       - hadoop_journal1:/hadoop/dfs/journalnode
-    networks:
-      - case-study-network
 
   journalnode2:
+    <<: *hadoop-common
     build:
       context: ./journalnode
       dockerfile: Dockerfile
     container_name: journalnode02
     hostname: journalnode02
-    env_file: ./hadoop.env
     volumes:
       - hadoop_journal2:/hadoop/dfs/journalnode
-    networks:
-      - case-study-network
 
   journalnode3:
+    <<: *hadoop-common
     build:
       context: ./journalnode
       dockerfile: Dockerfile
     container_name: journalnode03
     hostname: journalnode03
-    env_file: ./hadoop.env
     volumes:
       - hadoop_journal3:/hadoop/dfs/journalnode
-    networks:
-      - case-study-network
 
   namenode1:
+    <<: *hadoop-common
     image: bde2020/hadoop-namenode:2.0.0-hadoop3.2.1-java8
     container_name: namenode1
     hostname: namenode1
     environment:
       CLUSTER_NAME: hdfs-ha
       ENSURE_NAMENODE_DIR: /hadoop/dfs/name
-    env_file: ./hadoop.env
     ports:
       - "9870:9870"
     volumes:
       - hadoop_nn1:/hadoop/dfs/name
+      - ./scripts/namenode-entrypoint.sh:/namenode-entrypoint.sh:ro
+    command: ["/bin/bash", "/namenode-entrypoint.sh"]
     depends_on:
       - journalnode1
       - journalnode2
       - journalnode3
       - zoo1
-    networks:
-      - case-study-network
+      - zoo2
+      - zoo3
 
   namenode2:
+    <<: *hadoop-common
     image: bde2020/hadoop-namenode:2.0.0-hadoop3.2.1-java8
     container_name: namenode2
     hostname: namenode2
     environment:
       CLUSTER_NAME: hdfs-ha
-    env_file: ./hadoop.env
-    ports:
-      - "9871:9870"
     volumes:
       - hadoop_nn2:/hadoop/dfs/name
+      - ./scripts/namenode2-entrypoint.sh:/namenode2-entrypoint.sh:ro
+    command: ["/bin/bash", "/namenode2-entrypoint.sh"]
     depends_on:
       - namenode1
-    networks:
-      - case-study-network
+
 
   datanode1:
+    <<: *hadoop-common
     image: bde2020/hadoop-datanode:2.0.0-hadoop3.2.1-java8
     container_name: datanode1
     hostname: datanode1
-    env_file: ./hadoop.env
     volumes:
       - hadoop_dn1:/hadoop/dfs/data
+      - ./hadoop-conf/hdfs-site.xml:/etc/hadoop/hdfs-site.xml
     depends_on:
       - namenode1
       - namenode2
-    networks:
-      - case-study-network
 
-  # ---------------- Hadoop HA — YARN (ResourceManagers + NodeManager) ----------------
+  datanode2:
+    <<: *hadoop-common
+    image: bde2020/hadoop-datanode:2.0.0-hadoop3.2.1-java8
+    container_name: datanode2
+    hostname: datanode2
+    volumes:
+      - hadoop_dn2:/hadoop/dfs/data
+      - ./hadoop-conf/hdfs-site.xml:/etc/hadoop/hdfs-site.xml
+    depends_on:
+      - namenode1
+      - namenode2
+
+  # ---------------- Hadoop HA — YARN ----------------
   resourcemanager1:
+    <<: *hadoop-common
     image: bde2020/hadoop-resourcemanager:2.0.0-hadoop3.2.1-java8
     container_name: resourcemanager1
     hostname: resourcemanager1
-    env_file: ./hadoop.env
     environment:
-      SERVICE_PRECONDITION: "namenode1:9870 namenode2:9870 datanode1:9864"
+      SERVICE_PRECONDITION: "namenode1:9870 namenode2:9870 datanode1:9864 datanode2:9864"
     ports:
       - "8088:8088"
     depends_on:
       - namenode1
       - namenode2
       - zoo1
-    networks:
-      - case-study-network
+      - zoo2
+      - zoo3
 
   resourcemanager2:
+    <<: *hadoop-common
     image: bde2020/hadoop-resourcemanager:2.0.0-hadoop3.2.1-java8
     container_name: resourcemanager2
     hostname: resourcemanager2
-    env_file: ./hadoop.env
     environment:
-      SERVICE_PRECONDITION: "namenode1:9870 namenode2:9870 datanode1:9864"
+      SERVICE_PRECONDITION: "namenode1:9870 namenode2:9870 datanode1:9864 datanode2:9864"
     ports:
       - "8089:8088"
     depends_on:
       - resourcemanager1
-    networks:
-      - case-study-network
 
   nodemanager1:
-    image: bde2020/hadoop-nodemanager:2.0.0-hadoop3.2.1-java8
+    <<: *hadoop-common
+    build:
+      context: ./nodemanager
+      dockerfile: Dockerfile
     container_name: nodemanager1
     hostname: nodemanager1
-    env_file: ./hadoop.env
     environment:
-      SERVICE_PRECONDITION: "namenode1:9870 namenode2:9870 datanode1:9864 resourcemanager1:8088 resourcemanager2:8088"
+      SERVICE_PRECONDITION: "namenode1:9870 namenode2:9870 datanode1:9864 datanode2:9864 resourcemanager1:8088 resourcemanager2:8088"
     depends_on:
       - resourcemanager1
       - resourcemanager2
       - datanode1
-    networks:
-      - case-study-network
+      - datanode2
 
-  # ---------------- Spark Configuration ----------------
-
-  spark-master:
-    image: apache/spark:3.5.3
-    container_name: spark-master
-    hostname: spark-master
-    command: >
-      /opt/spark/bin/spark-class org.apache.spark.deploy.master.Master
-      --host spark-master --port 7077 --webui-port 8080
-    ports:
-      - '8090:8080'
-      - '7071:7077'
-    networks:
-      - case-study-network
-
-  spark-worker:
-    image: apache/spark:3.5.3
-    container_name: spark-worker
-    hostname: spark-worker
-    depends_on:
-      - spark-master
-    command: >
-      /opt/spark/bin/spark-class org.apache.spark.deploy.worker.Worker
-      spark://spark-master:7077
+  nodemanager2:
+    <<: *hadoop-common
+    build:
+      context: ./nodemanager
+      dockerfile: Dockerfile
+    container_name: nodemanager2
+    hostname: nodemanager2
     environment:
-      SPARK_WORKER_MEMORY: 2G
-      SPARK_WORKER_CORES: 2
-    env_file:
-      - .env  
+      SERVICE_PRECONDITION: "namenode1:9870 namenode2:9870 datanode1:9864 datanode2:9864 resourcemanager1:8088 resourcemanager2:8088"
+    depends_on:
+      - resourcemanager1
+      - resourcemanager2
+      - datanode1
+      - datanode2
+
+  # ---------------- Hive: metastore + HiveServer2 ----------------
+  hive-metastore-db:
+    image: postgres:15
+    container_name: hive-metastore-db
+    hostname: hive-metastore-db
+    environment:
+      POSTGRES_DB: metastore
+      POSTGRES_USER: hive
+      POSTGRES_PASSWORD: hive
+      POSTGRES_HOST_AUTH_METHOD: md5
+      POSTGRES_INITDB_ARGS: "--auth-host=md5"
+    command: ["postgres", "-c", "password_encryption=md5"]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U hive -d metastore -h localhost"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
     volumes:
-    - ./spark-jobs:/opt/spark-jobs   
+      - hive_metastore_db_data:/var/lib/postgresql/data
+    restart: unless-stopped
     networks:
       - case-study-network
 
+  hive-metastore:
+    image: apache/hive:3.1.3
+    container_name: hive-metastore
+    hostname: hive-metastore
+    environment:
+      SERVICE_NAME: metastore
+      DB_DRIVER: postgres
+      HADOOP_CONF_DIR: /opt/hadoop/conf
+      IS_RESUME: "true"
+      SERVICE_OPTS: >-
+        -Djavax.jdo.option.ConnectionURL=jdbc:postgresql://hive-metastore-db:5432/metastore
+        -Djavax.jdo.option.ConnectionDriverName=org.postgresql.Driver
+        -Djavax.jdo.option.ConnectionUserName=hive
+        -Djavax.jdo.option.ConnectionPassword=hive
+    ports:
+      - "9083:9083"
+    volumes:
+      - ./hive-conf/hive-site.xml:/opt/hive/conf/hive-site.xml:ro
+      - ./hadoop-conf:/opt/hadoop/conf:ro
+      - hive_metastore_warehouse:/opt/hive/data/warehouse
+    depends_on:
+      hive-metastore-db:
+        condition: service_healthy
+      namenode1:
+        condition: service_started
+      namenode2:
+        condition: service_started
+    restart: unless-stopped
+    networks:
+      - case-study-network
+
+  hive-server:
+    image: apache/hive:3.1.3
+    container_name: hive-server
+    hostname: hive-server
+    environment:
+      SERVICE_NAME: hiveserver2
+      HADOOP_CONF_DIR: /opt/hadoop/conf
+      SKIP_SCHEMA_INIT: "true"
+      DB_DRIVER: postgres
+      IS_RESUME: "true"
+      SERVICE_OPTS: >-
+        -Dhive.metastore.uris=thrift://hive-metastore:9083
+    ports:
+      - "10000:10000"
+      - "10002:10002"
+    volumes:
+      - ./hive-conf/hive-site.xml:/opt/hive/conf/hive-site.xml:ro
+      - ./hadoop-conf:/opt/hadoop/conf:ro
+    depends_on:
+      - hive-metastore
+      - resourcemanager1
+      - resourcemanager2
+    restart: unless-stopped
+    networks:
+      - case-study-network
+
+  # ---------------- Spark: submit-only client, runs on YARN ----------------
   spark-submit:
     image: apache/spark:3.5.3
     container_name: spark-submit
     depends_on:
-      - spark-master
-      - spark-worker
+      - resourcemanager1
+      - resourcemanager2
+      - namenode1
+      - namenode2
+      - hive-metastore
     env_file:
-      - .env  
+      - .env
+    environment:
+      HADOOP_CONF_DIR: /opt/hadoop/conf
+      YARN_CONF_DIR: /opt/hadoop/conf
     volumes:
       - ./spark-jobs:/opt/spark-jobs
+      - ./hadoop-conf:/opt/hadoop/conf:ro
+      - ./hive-conf/hive-site.xml:/opt/spark/conf/hive-site.xml:ro
     networks:
       - case-study-network
     entrypoint: ["tail", "-f", "/dev/null"]
-
 
 networks:
   case-study-network:
@@ -533,3 +587,6 @@ volumes:
   hadoop_nn1:
   hadoop_nn2:
   hadoop_dn1:
+  hadoop_dn2:
+  hive_metastore_db_data:
+  hive_metastore_warehouse:

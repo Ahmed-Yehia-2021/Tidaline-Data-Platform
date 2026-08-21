@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+  <property>
+    <name>fs.defaultFS</name>
+    <value>hdfs://hdfs-ha</value>
+  </property>
+  <property>
+    <name>ha.zookeeper.quorum</name>
+    <value>zoo1:2181,zoo2:2181,zoo3:2181</value>
+  </property>
+<property>
+  <name>dfs.ha.automatic-failover.enabled</name>
+  <value>true</value>
+</property>
+<property>
+  <name>dfs.namenode.shared.edits.dir</name>
+  <value>qjournal://journalnode01:8485;journalnode02:8485;journalnode03:8485/hdfs-ha</value>
+</property>
+<property>
+  <name>dfs.ha.fencing.methods</name>
+  <value>shell(/bin/true)</value>
+</property>
+<property>
+  <name>dfs.journalnode.edits.dir</name>
+  <value>/hadoop/dfs/journalnode</value>
+</property>
+</configuration>

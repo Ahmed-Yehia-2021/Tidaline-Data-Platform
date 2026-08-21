@@ -72,7 +72,7 @@ sfOptions = {
     "sfWarehouse": os.environ["SNOWFLAKE_WAREHOUSE"],
 }
 
-def write_to_snowflake(batch_df):
+def write_to_snowflake(batch_df,batch_id):
     batch_df.write \
         .format("net.snowflake.spark.snowflake") \
         .options(**sfOptions) \

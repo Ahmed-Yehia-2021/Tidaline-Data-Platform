@@ -11,4 +11,4 @@ COPY vessels.py .
 
 RUN mkdir -p /app/data/ports /app/data/vessels
 
-CMD ["python", "--version"]
+CMD ["python", "ports.py"]

@@ -122,7 +122,8 @@ with DAG(
         task_id="validate_gold",
         bash_command=ssh_command(
             "hive -e "
-            "\"SELECT COUNT(*) FROM gold.ports;\""
+            "\"MSCK REPAIR TABLE gold.ports; "
+            "SELECT COUNT(*) FROM gold.ports;\""
         ),
     )
 

@@ -1,0 +1,47 @@
+# ── Python ────────────────────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.egg-info/
+dist/
+build/
+*.egg
+
+# ── Environment / Secrets ─────────────────────────────────────────────────────
+.env
+.env.*
+*.key
+*.pem
+*.key.pub
+airflow/itvdelab.key*
+
+# ── Airflow runtime artefacts ─────────────────────────────────────────────────
+airflow/logs/
+airflow/plugins/__pycache__/
+# Keep the logs dir itself tracked (so the bind mount exists on a fresh clone)
+!airflow/logs/.gitkeep
+
+# ── Spark / Hadoop / layer runtime logs ───────────────────────────────────────
+Gold_Layer/logs/
+Silver_Layer/logs/
+Spark_job/logs/
+Bronze_Layer/logs/
+logs/
+
+# ── Data files (generated at runtime or too large for git) ───────────────────
+batch/data/
+*.csv
+*.parquet
+*.orc
+*.avro
+
+# ── Editor / OS ───────────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+~$*
+*.swp
+*.swo
+
+# ── Jupyter ───────────────────────────────────────────────────────────────────
+.ipynb_checkpoints/

@@ -124,23 +124,22 @@ def process_cdc_batch(batch_df, batch_id):
         
         # Prepare data for staging
         prepared_df = transformed_df.select(
-            F.col("unid"),
-            F.col("source_id"),
-            F.col("source_catalog"),
-            F.col("lastupdate").cast("timestamp").alias("lastupdate"),
-            F.col("time").cast("timestamp").alias("time"),
-            F.col("received_at").cast("timestamp").alias("received_at"),
-            F.col("flynn_region"),
-            F.col("lat").cast("double").alias("lat"),
-            F.col("lon").cast("double").alias("lon"),
-            F.col("depth").cast("double").alias("depth"),
-            F.col("evtype"),
-            F.col("auth"),
-            F.col("mag").cast("double").alias("mag"),
-            F.col("magtype"),
-            F.col("action"),
-            F.col("event_date").cast("date").alias("event_date"),
-            F.col("__op")
+            F.col("unid").alias("UNID"),
+            F.col("source_id").alias("SOURCE_ID"),
+            F.col("source_catalog").alias("SOURCE_CATALOG"),
+            F.col("lastupdate").cast("timestamp").alias("LASTUPDATE_TIME"),
+            F.col("time").cast("timestamp").alias("EVENT_TIME"),
+            F.col("received_at").cast("timestamp").alias("RECEIVED_TIME"),
+            F.col("flynn_region").alias("FLYNN_REGION"),
+            F.col("lat").cast("double").alias("LAT"),
+            F.col("lon").cast("double").alias("LON"),
+            F.col("depth").cast("double").alias("DEPTH"),
+            F.col("evtype").alias("EVTYPE"),
+            F.col("auth").alias("AUTH"),
+            F.col("mag").cast("double").alias("MAG"),
+            F.col("magtype").alias("MAGTYPE"),
+            F.col("action").alias("ACTION"),
+            F.col("__op").alias("OP")
         )
         
         # Get Snowflake utilities
@@ -168,33 +167,33 @@ def process_cdc_batch(batch_df, batch_id):
         merge_query = """
             MERGE INTO EARTHQUAKES t
             USING CDC_STAGING s
-            ON t.UNID = s.unid
+            ON t.UNID = s.UNID
 
-            WHEN MATCHED AND s.__op = 'd' THEN DELETE
+            WHEN MATCHED AND s.OP = 'd' THEN DELETE
 
-            WHEN MATCHED AND s.__op = 'u' THEN UPDATE SET
-                t.SOURCE_ID = s.source_id,
-                t.SOURCE_CATALOG = s.source_catalog,
-                t.LASTUPDATE = s.LASTUPDATE,
-                t.TIME = s.TIME,
-                t.RECEIVED_AT = s.RECEIVED_AT,
-                t.FLYNN_REGION = s.flynn_region,
-                t.LAT = s.lat,
-                t.LON = s.lon,
-                t.DEPTH = s.depth,
-                t.EVTYPE = s.evtype,
-                t.AUTH = s.auth,
-                t.MAG = s.mag,
-                t.MAGTYPE = s.magtype,
-                t.ACTION = s.action,
-                t.EVENT_DATE = s.event_date
+            WHEN MATCHED AND s.OP = 'u' THEN UPDATE SET
+                t.SOURCE_ID = s.SOURCE_ID,
+                t.SOURCE_CATALOG = s.SOURCE_CATALOG,
+                t.LASTUPDATE_TIME = s.LASTUPDATE_TIME,
+                t.EVENT_TIME = s.EVENT_TIME,
+                t.RECEIVED_TIME = s.RECEIVED_TIME,
+                t.FLYNN_REGION = s.FLYNN_REGION,
+                t.LAT = s.LAT,
+                t.LON = s.LON,
+                t.DEPTH = s.DEPTH,
+                t.EVTYPE = s.EVTYPE,
+                t.AUTH = s.AUTH,
+                t.MAG = s.MAG,
+                t.MAGTYPE = s.MAGTYPE,
+                t.ACTION = s.ACTION,
+                t.OP = s.OP
 
-            WHEN NOT MATCHED AND s.__op IN ('c', 'r') THEN INSERT (
-                UNID, SOURCE_ID, SOURCE_CATALOG, LASTUPDATE, TIME, RECEIVED_AT,
-                FLYNN_REGION, LAT, LON, DEPTH, EVTYPE, AUTH, MAG, MAGTYPE, ACTION, EVENT_DATE
+            WHEN NOT MATCHED AND s.OP IN ('c', 'r') THEN INSERT (
+                UNID, SOURCE_ID, SOURCE_CATALOG, LASTUPDATE_TIME, EVENT_TIME, RECEIVED_TIME,
+                FLYNN_REGION, LAT, LON, DEPTH, EVTYPE, AUTH, MAG, MAGTYPE, ACTION, OP, LOADED_AT
             ) VALUES (
-                s.unid, s.source_id, s.source_catalog, s.LASTUPDATE, s.TIME, s.RECEIVED_AT,
-                s.flynn_region, s.lat, s.lon, s.depth, s.evtype, s.auth, s.mag, s.magtype, s.action, s.event_date
+                s.UNID, s.SOURCE_ID, s.SOURCE_CATALOG, s.LASTUPDATE_TIME, s.EVENT_TIME, s.RECEIVED_TIME,
+                s.FLYNN_REGION, s.LAT, s.LON, s.DEPTH, s.EVTYPE, s.AUTH, s.MAG, s.MAGTYPE, s.ACTION, s.OP, CURRENT_TIMESTAMP()
             )
         """
         

@@ -312,3 +312,97 @@ sources:
 
       - communications_count
       - comm_rate
+
+  vessels:
+
+    description: "Current Vessel Dimension"
+
+    input_path: "/silver_layer/vessels"
+    output_path: "/gold_layer/vessels"
+
+    validation:
+      required_columns:
+        - name
+      allow_extra_columns: false
+      allow_missing_columns: false
+      allow_empty_file: false
+
+    columns:
+      vessel_key:
+        type: long
+        nullable: false
+      name:
+        type: string
+        nullable: true
+      type:
+        type: string
+        nullable: true
+      year_built:
+        type: integer
+        nullable: true
+      gross_tonnage:
+        type: long
+        nullable: true
+      deadweight:
+        type: long
+        nullable: true
+      length_m:
+        type: double
+        nullable: true
+      beam_m:
+        type: double
+        nullable: true
+      detail_link:
+        type: string
+        nullable: true
+      departure_date:
+        type: timestamp
+        nullable: true
+      last_port_country:
+        type: string
+        nullable: true
+      last_port_name:
+        type: string
+        nullable: true
+      arrival_date:
+        type: timestamp
+        nullable: true
+      destination_port_country:
+        type: string
+        nullable: true
+      destination_port_name:
+        type: string
+        nullable: true
+      destination_port_lat:
+        type: double
+        nullable: true
+      destination_port_lon:
+        type: double
+        nullable: true
+      reported_status:
+        type: string
+        nullable: true
+      report_date:
+        type: timestamp
+        nullable: true
+
+    gold_columns:
+      - vessel_key
+      - name
+      - type
+      - year_built
+      - gross_tonnage
+      - deadweight
+      - length_m
+      - beam_m
+      - detail_link
+      - departure_date
+      - last_port_country
+      - last_port_name
+      - arrival_date
+      - destination_port_country
+      - destination_port_name
+      - destination_port_lat
+      - destination_port_lon
+      - reported_status
+      - report_date

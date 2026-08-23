@@ -51,3 +51,27 @@ CREATE EXTERNAL TABLE IF NOT EXISTS gold.ports (
 )
 STORED AS PARQUET
 LOCATION '/gold_layer/ports';
+
+CREATE EXTERNAL TABLE IF NOT EXISTS gold.vessels (
+    vessel_key BIGINT,
+    name STRING,
+    type STRING,
+    year_built INT,
+    gross_tonnage BIGINT,
+    deadweight BIGINT,
+    length_m DOUBLE,
+    beam_m DOUBLE,
+    detail_link STRING,
+    departure_date TIMESTAMP,
+    last_port_country STRING,
+    last_port_name STRING,
+    arrival_date TIMESTAMP,
+    destination_port_country STRING,
+    destination_port_name STRING,
+    destination_port_lat DOUBLE,
+    destination_port_lon DOUBLE,
+    reported_status STRING,
+    report_date TIMESTAMP
+)
+STORED AS PARQUET
+LOCATION '/gold_layer/vessels';

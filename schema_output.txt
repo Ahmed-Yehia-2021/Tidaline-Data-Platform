@@ -1,0 +1,173 @@
+:: loading settings :: url = jar:file:/usr/local/lib/python3.6/dist-packages/pyspark/jars/ivy-2.5.1.jar!/org/apache/ivy/core/settings/ivysettings.xml
+Ivy Default Cache set to: /home/itversity/.ivy2/cache
+The jars for the packages stored in: /home/itversity/.ivy2/jars
+net.snowflake#snowflake-jdbc added as a dependency
+net.snowflake#spark-snowflake_2.12 added as a dependency
+:: resolving dependencies :: org.apache.spark#spark-submit-parent-563458ec-dddc-4fa5-9756-d155d95f9214;1.0
+	confs: [default]
+	found net.snowflake#snowflake-jdbc;3.13.22 in central
+	found net.snowflake#spark-snowflake_2.12;2.11.0-spark_3.3 in central
+	found net.snowflake#snowflake-ingest-sdk;0.10.8 in central
+:: resolution report :: resolve 141ms :: artifacts dl 8ms
+	:: modules in use:
+	net.snowflake#snowflake-ingest-sdk;0.10.8 from central in [default]
+	net.snowflake#snowflake-jdbc;3.13.22 from central in [default]
+	net.snowflake#spark-snowflake_2.12;2.11.0-spark_3.3 from central in [default]
+	---------------------------------------------------------------------
+	|                  |            modules            ||   artifacts   |
+	|       conf       | number| search|dwnlded|evicted|| number|dwnlded|
+	---------------------------------------------------------------------
+	|      default     |   3   |   0   |   0   |   0   ||   3   |   0   |
+	---------------------------------------------------------------------
+:: retrieving :: org.apache.spark#spark-submit-parent-563458ec-dddc-4fa5-9756-d155d95f9214
+	confs: [default]
+	0 artifacts copied, 3 already retrieved (0kB/5ms)
+26/08/23 03:24:56 WARN NativeCodeLoader: Unable to load native-hadoop library for your platform... using builtin-java classes where applicable
+Using Spark's default log4j profile: org/apache/spark/log4j-defaults.properties
+26/08/23 03:24:56 INFO SparkContext: Running Spark version 3.2.4
+26/08/23 03:24:56 INFO ResourceUtils: ==============================================================
+26/08/23 03:24:56 INFO ResourceUtils: No custom resources configured for spark.driver.
+26/08/23 03:24:56 INFO ResourceUtils: ==============================================================
+26/08/23 03:24:56 INFO SparkContext: Submitted application: TestSF
+26/08/23 03:24:56 INFO ResourceProfile: Default ResourceProfile created, executor resources: Map(cores -> name: cores, amount: 1, script: , vendor: , memory -> name: memory, amount: 1024, script: , vendor: , offHeap -> name: offHeap, amount: 0, script: , vendor: ), task resources: Map(cpus -> name: cpus, amount: 1.0)
+26/08/23 03:24:56 INFO ResourceProfile: Limiting resource is cpu
+26/08/23 03:24:56 INFO ResourceProfileManager: Added ResourceProfile id: 0
+26/08/23 03:24:56 INFO SecurityManager: Changing view acls to: itversity
+26/08/23 03:24:56 INFO SecurityManager: Changing modify acls to: itversity
+26/08/23 03:24:56 INFO SecurityManager: Changing view acls groups to: 
+26/08/23 03:24:56 INFO SecurityManager: Changing modify acls groups to: 
+26/08/23 03:24:56 INFO SecurityManager: SecurityManager: authentication disabled; ui acls disabled; users  with view permissions: Set(itversity); groups with view permissions: Set(); users  with modify permissions: Set(itversity); groups with modify permissions: Set()
+26/08/23 03:24:56 INFO Utils: Successfully started service 'sparkDriver' on port 46279.
+26/08/23 03:24:56 INFO SparkEnv: Registering MapOutputTracker
+26/08/23 03:24:57 INFO SparkEnv: Registering BlockManagerMaster
+26/08/23 03:24:57 INFO BlockManagerMasterEndpoint: Using org.apache.spark.storage.DefaultTopologyMapper for getting topology information
+26/08/23 03:24:57 INFO BlockManagerMasterEndpoint: BlockManagerMasterEndpoint up
+26/08/23 03:24:57 INFO SparkEnv: Registering BlockManagerMasterHeartbeat
+26/08/23 03:24:57 INFO DiskBlockManager: Created local directory at /tmp/blockmgr-385d2bdc-b154-427a-bcef-b437320821a3
+26/08/23 03:24:57 INFO MemoryStore: MemoryStore started with capacity 366.3 MiB
+26/08/23 03:24:57 INFO SparkEnv: Registering OutputCommitCoordinator
+26/08/23 03:24:57 WARN Utils: Service 'SparkUI' could not bind on port 4040. Attempting port 4041.
+26/08/23 03:24:57 INFO Utils: Successfully started service 'SparkUI' on port 4041.
+26/08/23 03:24:57 INFO SparkUI: Bound SparkUI to 0.0.0.0, and started at http://0dfd1fcc0c66:4041
+26/08/23 03:24:57 INFO SparkContext: Added JAR file:///home/itversity/.ivy2/jars/net.snowflake_snowflake-jdbc-3.13.22.jar at spark://0dfd1fcc0c66:46279/jars/net.snowflake_snowflake-jdbc-3.13.22.jar with timestamp 1787455496620
+26/08/23 03:24:57 INFO SparkContext: Added JAR file:///home/itversity/.ivy2/jars/net.snowflake_spark-snowflake_2.12-2.11.0-spark_3.3.jar at spark://0dfd1fcc0c66:46279/jars/net.snowflake_spark-snowflake_2.12-2.11.0-spark_3.3.jar with timestamp 1787455496620
+26/08/23 03:24:57 INFO SparkContext: Added JAR file:///home/itversity/.ivy2/jars/net.snowflake_snowflake-ingest-sdk-0.10.8.jar at spark://0dfd1fcc0c66:46279/jars/net.snowflake_snowflake-ingest-sdk-0.10.8.jar with timestamp 1787455496620
+26/08/23 03:24:57 INFO SparkContext: Added file file:///home/itversity/.ivy2/jars/net.snowflake_snowflake-jdbc-3.13.22.jar at file:///home/itversity/.ivy2/jars/net.snowflake_snowflake-jdbc-3.13.22.jar with timestamp 1787455496620
+26/08/23 03:24:57 INFO Utils: Copying /home/itversity/.ivy2/jars/net.snowflake_snowflake-jdbc-3.13.22.jar to /tmp/spark-884505ef-49cd-4a59-8b5b-47ad7f1c6147/userFiles-c5cd691f-f745-4c5a-bad4-b1f9b233fcfc/net.snowflake_snowflake-jdbc-3.13.22.jar
+26/08/23 03:24:57 INFO SparkContext: Added file file:///home/itversity/.ivy2/jars/net.snowflake_spark-snowflake_2.12-2.11.0-spark_3.3.jar at file:///home/itversity/.ivy2/jars/net.snowflake_spark-snowflake_2.12-2.11.0-spark_3.3.jar with timestamp 1787455496620
+26/08/23 03:24:57 INFO Utils: Copying /home/itversity/.ivy2/jars/net.snowflake_spark-snowflake_2.12-2.11.0-spark_3.3.jar to /tmp/spark-884505ef-49cd-4a59-8b5b-47ad7f1c6147/userFiles-c5cd691f-f745-4c5a-bad4-b1f9b233fcfc/net.snowflake_spark-snowflake_2.12-2.11.0-spark_3.3.jar
+26/08/23 03:24:57 INFO SparkContext: Added file file:///home/itversity/.ivy2/jars/net.snowflake_snowflake-ingest-sdk-0.10.8.jar at file:///home/itversity/.ivy2/jars/net.snowflake_snowflake-ingest-sdk-0.10.8.jar with timestamp 1787455496620
+26/08/23 03:24:57 INFO Utils: Copying /home/itversity/.ivy2/jars/net.snowflake_snowflake-ingest-sdk-0.10.8.jar to /tmp/spark-884505ef-49cd-4a59-8b5b-47ad7f1c6147/userFiles-c5cd691f-f745-4c5a-bad4-b1f9b233fcfc/net.snowflake_snowflake-ingest-sdk-0.10.8.jar
+26/08/23 03:24:57 INFO Executor: Starting executor ID driver on host 0dfd1fcc0c66
+26/08/23 03:24:57 INFO Executor: Fetching file:///home/itversity/.ivy2/jars/net.snowflake_spark-snowflake_2.12-2.11.0-spark_3.3.jar with timestamp 1787455496620
+26/08/23 03:24:57 INFO Utils: /home/itversity/.ivy2/jars/net.snowflake_spark-snowflake_2.12-2.11.0-spark_3.3.jar has been previously copied to /tmp/spark-884505ef-49cd-4a59-8b5b-47ad7f1c6147/userFiles-c5cd691f-f745-4c5a-bad4-b1f9b233fcfc/net.snowflake_spark-snowflake_2.12-2.11.0-spark_3.3.jar
+26/08/23 03:24:57 INFO Executor: Fetching file:///home/itversity/.ivy2/jars/net.snowflake_snowflake-jdbc-3.13.22.jar with timestamp 1787455496620
+26/08/23 03:24:57 INFO Utils: /home/itversity/.ivy2/jars/net.snowflake_snowflake-jdbc-3.13.22.jar has been previously copied to /tmp/spark-884505ef-49cd-4a59-8b5b-47ad7f1c6147/userFiles-c5cd691f-f745-4c5a-bad4-b1f9b233fcfc/net.snowflake_snowflake-jdbc-3.13.22.jar
+26/08/23 03:24:57 INFO Executor: Fetching file:///home/itversity/.ivy2/jars/net.snowflake_snowflake-ingest-sdk-0.10.8.jar with timestamp 1787455496620
+26/08/23 03:24:57 INFO Utils: /home/itversity/.ivy2/jars/net.snowflake_snowflake-ingest-sdk-0.10.8.jar has been previously copied to /tmp/spark-884505ef-49cd-4a59-8b5b-47ad7f1c6147/userFiles-c5cd691f-f745-4c5a-bad4-b1f9b233fcfc/net.snowflake_snowflake-ingest-sdk-0.10.8.jar
+26/08/23 03:24:57 INFO Executor: Fetching spark://0dfd1fcc0c66:46279/jars/net.snowflake_snowflake-ingest-sdk-0.10.8.jar with timestamp 1787455496620
+26/08/23 03:24:57 INFO TransportClientFactory: Successfully created connection to 0dfd1fcc0c66/10.89.0.216:46279 after 26 ms (0 ms spent in bootstraps)
+26/08/23 03:24:57 INFO Utils: Fetching spark://0dfd1fcc0c66:46279/jars/net.snowflake_snowflake-ingest-sdk-0.10.8.jar to /tmp/spark-884505ef-49cd-4a59-8b5b-47ad7f1c6147/userFiles-c5cd691f-f745-4c5a-bad4-b1f9b233fcfc/fetchFileTemp1483942894782895427.tmp
+26/08/23 03:24:57 INFO Utils: /tmp/spark-884505ef-49cd-4a59-8b5b-47ad7f1c6147/userFiles-c5cd691f-f745-4c5a-bad4-b1f9b233fcfc/fetchFileTemp1483942894782895427.tmp has been previously copied to /tmp/spark-884505ef-49cd-4a59-8b5b-47ad7f1c6147/userFiles-c5cd691f-f745-4c5a-bad4-b1f9b233fcfc/net.snowflake_snowflake-ingest-sdk-0.10.8.jar
+26/08/23 03:24:57 INFO Executor: Adding file:/tmp/spark-884505ef-49cd-4a59-8b5b-47ad7f1c6147/userFiles-c5cd691f-f745-4c5a-bad4-b1f9b233fcfc/net.snowflake_snowflake-ingest-sdk-0.10.8.jar to class loader
+26/08/23 03:24:57 INFO Executor: Fetching spark://0dfd1fcc0c66:46279/jars/net.snowflake_spark-snowflake_2.12-2.11.0-spark_3.3.jar with timestamp 1787455496620
+26/08/23 03:24:57 INFO Utils: Fetching spark://0dfd1fcc0c66:46279/jars/net.snowflake_spark-snowflake_2.12-2.11.0-spark_3.3.jar to /tmp/spark-884505ef-49cd-4a59-8b5b-47ad7f1c6147/userFiles-c5cd691f-f745-4c5a-bad4-b1f9b233fcfc/fetchFileTemp4396620933780502055.tmp
+26/08/23 03:24:57 INFO Utils: /tmp/spark-884505ef-49cd-4a59-8b5b-47ad7f1c6147/userFiles-c5cd691f-f745-4c5a-bad4-b1f9b233fcfc/fetchFileTemp4396620933780502055.tmp has been previously copied to /tmp/spark-884505ef-49cd-4a59-8b5b-47ad7f1c6147/userFiles-c5cd691f-f745-4c5a-bad4-b1f9b233fcfc/net.snowflake_spark-snowflake_2.12-2.11.0-spark_3.3.jar
+26/08/23 03:24:57 INFO Executor: Adding file:/tmp/spark-884505ef-49cd-4a59-8b5b-47ad7f1c6147/userFiles-c5cd691f-f745-4c5a-bad4-b1f9b233fcfc/net.snowflake_spark-snowflake_2.12-2.11.0-spark_3.3.jar to class loader
+26/08/23 03:24:57 INFO Executor: Fetching spark://0dfd1fcc0c66:46279/jars/net.snowflake_snowflake-jdbc-3.13.22.jar with timestamp 1787455496620
+26/08/23 03:24:57 INFO Utils: Fetching spark://0dfd1fcc0c66:46279/jars/net.snowflake_snowflake-jdbc-3.13.22.jar to /tmp/spark-884505ef-49cd-4a59-8b5b-47ad7f1c6147/userFiles-c5cd691f-f745-4c5a-bad4-b1f9b233fcfc/fetchFileTemp3664302779590299044.tmp
+26/08/23 03:24:57 INFO Utils: /tmp/spark-884505ef-49cd-4a59-8b5b-47ad7f1c6147/userFiles-c5cd691f-f745-4c5a-bad4-b1f9b233fcfc/fetchFileTemp3664302779590299044.tmp has been previously copied to /tmp/spark-884505ef-49cd-4a59-8b5b-47ad7f1c6147/userFiles-c5cd691f-f745-4c5a-bad4-b1f9b233fcfc/net.snowflake_snowflake-jdbc-3.13.22.jar
+26/08/23 03:24:57 INFO Executor: Adding file:/tmp/spark-884505ef-49cd-4a59-8b5b-47ad7f1c6147/userFiles-c5cd691f-f745-4c5a-bad4-b1f9b233fcfc/net.snowflake_snowflake-jdbc-3.13.22.jar to class loader
+26/08/23 03:24:57 INFO Utils: Successfully started service 'org.apache.spark.network.netty.NettyBlockTransferService' on port 36765.
+26/08/23 03:24:57 INFO NettyBlockTransferService: Server created on 0dfd1fcc0c66:36765
+26/08/23 03:24:57 INFO BlockManager: Using org.apache.spark.storage.RandomBlockReplicationPolicy for block replication policy
+26/08/23 03:24:57 INFO BlockManagerMaster: Registering BlockManager BlockManagerId(driver, 0dfd1fcc0c66, 36765, None)
+26/08/23 03:24:57 INFO BlockManagerMasterEndpoint: Registering block manager 0dfd1fcc0c66:36765 with 366.3 MiB RAM, BlockManagerId(driver, 0dfd1fcc0c66, 36765, None)
+26/08/23 03:24:57 INFO BlockManagerMaster: Registered BlockManager BlockManagerId(driver, 0dfd1fcc0c66, 36765, None)
+26/08/23 03:24:57 INFO BlockManager: Initialized BlockManager: BlockManagerId(driver, 0dfd1fcc0c66, 36765, None)
+/usr/local/lib/python3.6/dist-packages/pyspark/python/lib/pyspark.zip/pyspark/context.py:238: FutureWarning: Python 3.6 support is deprecated in Spark 3.2.
+  FutureWarning
+26/08/23 03:24:58 INFO SharedState: Setting hive.metastore.warehouse.dir ('null') to the value of spark.sql.warehouse.dir.
+26/08/23 03:24:58 INFO SharedState: Warehouse path is 'file:/spark_jobs/spark-warehouse'.
+--- EARTHQUAKES TABLE SCHEMA ---
+26/08/23 03:24:59 WARN SnowflakeConnectorUtils$: Query pushdown is not supported because you are using Spark 3.2.4 with a connector designed to support Spark 3.3. Either use the version of Spark supported by the connector or install a version of the connector that supports your version of Spark.
+Error describing EARTHQUAKES: An error occurred while calling o38.load.
+: net.snowflake.client.jdbc.SnowflakeSQLException: SQL compilation error:
+syntax error line 1 at position 15 unexpected 'DESCRIBE'.
+	at net.snowflake.client.jdbc.SnowflakeUtil.checkErrorAndThrowExceptionSub(SnowflakeUtil.java:127)
+	at net.snowflake.client.jdbc.SnowflakeUtil.checkErrorAndThrowException(SnowflakeUtil.java:67)
+	at net.snowflake.client.core.StmtUtil.pollForOutput(StmtUtil.java:456)
+	at net.snowflake.client.core.StmtUtil.execute(StmtUtil.java:366)
+	at net.snowflake.client.core.SFStatement.executeHelper(SFStatement.java:468)
+	at net.snowflake.client.core.SFStatement.executeQueryInternal(SFStatement.java:196)
+	at net.snowflake.client.core.SFStatement.executeQuery(SFStatement.java:133)
+	at net.snowflake.client.core.SFStatement.describe(SFStatement.java:152)
+	at net.snowflake.client.jdbc.SnowflakePreparedStatementV1.describeSqlIfNotTried(SnowflakePreparedStatementV1.java:97)
+	at net.snowflake.client.jdbc.SnowflakePreparedStatementV1.getMetaData(SnowflakePreparedStatementV1.java:552)
+	at net.snowflake.spark.snowflake.DefaultJDBCWrapper$DataBaseOperations.tableMetaDataFromStatement(SnowflakeJDBCWrapper.scala:570)
+	at net.snowflake.spark.snowflake.DefaultJDBCWrapper$DataBaseOperations.tableMetaData(SnowflakeJDBCWrapper.scala:563)
+	at net.snowflake.spark.snowflake.JDBCWrapper.resolveTable(SnowflakeJDBCWrapper.scala:82)
+	at net.snowflake.spark.snowflake.SnowflakeRelation.$anonfun$schema$1(SnowflakeRelation.scala:63)
+	at scala.Option.getOrElse(Option.scala:189)
+	at net.snowflake.spark.snowflake.SnowflakeRelation.schema$lzycompute(SnowflakeRelation.scala:58)
+	at net.snowflake.spark.snowflake.SnowflakeRelation.schema(SnowflakeRelation.scala:57)
+	at org.apache.spark.sql.execution.datasources.DataSource.resolveRelation(DataSource.scala:440)
+	at org.apache.spark.sql.DataFrameReader.loadV1Source(DataFrameReader.scala:274)
+	at org.apache.spark.sql.DataFrameReader.$anonfun$load$3(DataFrameReader.scala:245)
+	at scala.Option.getOrElse(Option.scala:189)
+	at org.apache.spark.sql.DataFrameReader.load(DataFrameReader.scala:245)
+	at org.apache.spark.sql.DataFrameReader.load(DataFrameReader.scala:174)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+	at java.lang.reflect.Method.invoke(Method.java:498)
+	at py4j.reflection.MethodInvoker.invoke(MethodInvoker.java:244)
+	at py4j.reflection.ReflectionEngine.invoke(ReflectionEngine.java:357)
+	at py4j.Gateway.invoke(Gateway.java:282)
+	at py4j.commands.AbstractCommand.invokeMethod(AbstractCommand.java:132)
+	at py4j.commands.CallCommand.execute(CallCommand.java:79)
+	at py4j.ClientServerConnection.waitForCommands(ClientServerConnection.java:182)
+	at py4j.ClientServerConnection.run(ClientServerConnection.java:106)
+	at java.lang.Thread.run(Thread.java:748)
+
+--- CDC_STAGING TABLE SCHEMA ---
+26/08/23 03:25:02 WARN SnowflakeConnectorUtils$: Query pushdown is not supported because you are using Spark 3.2.4 with a connector designed to support Spark 3.3. Either use the version of Spark supported by the connector or install a version of the connector that supports your version of Spark.
+Error describing CDC_STAGING: An error occurred while calling o49.load.
+: net.snowflake.client.jdbc.SnowflakeSQLException: SQL compilation error:
+syntax error line 1 at position 15 unexpected 'DESCRIBE'.
+	at net.snowflake.client.jdbc.SnowflakeUtil.checkErrorAndThrowExceptionSub(SnowflakeUtil.java:127)
+	at net.snowflake.client.jdbc.SnowflakeUtil.checkErrorAndThrowException(SnowflakeUtil.java:67)
+	at net.snowflake.client.core.StmtUtil.pollForOutput(StmtUtil.java:456)
+	at net.snowflake.client.core.StmtUtil.execute(StmtUtil.java:366)
+	at net.snowflake.client.core.SFStatement.executeHelper(SFStatement.java:468)
+	at net.snowflake.client.core.SFStatement.executeQueryInternal(SFStatement.java:196)
+	at net.snowflake.client.core.SFStatement.executeQuery(SFStatement.java:133)
+	at net.snowflake.client.core.SFStatement.describe(SFStatement.java:152)
+	at net.snowflake.client.jdbc.SnowflakePreparedStatementV1.describeSqlIfNotTried(SnowflakePreparedStatementV1.java:97)
+	at net.snowflake.client.jdbc.SnowflakePreparedStatementV1.getMetaData(SnowflakePreparedStatementV1.java:552)
+	at net.snowflake.spark.snowflake.DefaultJDBCWrapper$DataBaseOperations.tableMetaDataFromStatement(SnowflakeJDBCWrapper.scala:570)
+	at net.snowflake.spark.snowflake.DefaultJDBCWrapper$DataBaseOperations.tableMetaData(SnowflakeJDBCWrapper.scala:563)
+	at net.snowflake.spark.snowflake.JDBCWrapper.resolveTable(SnowflakeJDBCWrapper.scala:82)
+	at net.snowflake.spark.snowflake.SnowflakeRelation.$anonfun$schema$1(SnowflakeRelation.scala:63)
+	at scala.Option.getOrElse(Option.scala:189)
+	at net.snowflake.spark.snowflake.SnowflakeRelation.schema$lzycompute(SnowflakeRelation.scala:58)
+	at net.snowflake.spark.snowflake.SnowflakeRelation.schema(SnowflakeRelation.scala:57)
+	at org.apache.spark.sql.execution.datasources.DataSource.resolveRelation(DataSource.scala:440)
+	at org.apache.spark.sql.DataFrameReader.loadV1Source(DataFrameReader.scala:274)
+	at org.apache.spark.sql.DataFrameReader.$anonfun$load$3(DataFrameReader.scala:245)
+	at scala.Option.getOrElse(Option.scala:189)
+	at org.apache.spark.sql.DataFrameReader.load(DataFrameReader.scala:245)
+	at org.apache.spark.sql.DataFrameReader.load(DataFrameReader.scala:174)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+	at java.lang.reflect.Method.invoke(Method.java:498)
+	at py4j.reflection.MethodInvoker.invoke(MethodInvoker.java:244)
+	at py4j.reflection.ReflectionEngine.invoke(ReflectionEngine.java:357)
+	at py4j.Gateway.invoke(Gateway.java:282)
+	at py4j.commands.AbstractCommand.invokeMethod(AbstractCommand.java:132)
+	at py4j.commands.CallCommand.execute(CallCommand.java:79)
+	at py4j.ClientServerConnection.waitForCommands(ClientServerConnection.java:182)
+	at py4j.ClientServerConnection.run(ClientServerConnection.java:106)
+	at java.lang.Thread.run(Thread.java:748)
+

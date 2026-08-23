@@ -59,7 +59,7 @@ with DAG(
     schedule_interval="@monthly",
     catchup=False,
     max_active_runs=1,
-    tags=["ports", "etl", "bronze", "silver", "gold"],
+    tags=["ports", "vessels", "etl", "bronze", "silver", "gold"],
 ) as dag:
 
     # ========================================================
@@ -70,6 +70,13 @@ with DAG(
         task_id="bronze_ports_ingestion",
         bash_command=ssh_command(
             "bash /bronze_scripts/load_ports_to_hdfs.sh"
+        ),
+    )
+
+    bronze_vessels = BashOperator(
+        task_id="bronze_vessels_ingestion",
+        bash_command=ssh_command(
+            "bash /bronze_scripts/load_vessels_to_hdfs.sh"
         ),
     )
 
@@ -86,17 +93,34 @@ with DAG(
         ),
     )
 
+    silver_vessels = BashOperator(
+        task_id="silver_vessels_etl",
+        bash_command=ssh_command(
+            "spark-submit "
+            "/silver_scripts/Spark_job/vessels_to_silver.py"
+        ),
+    )
+
 
     # ========================================================
     # 3. Repair Silver Hive Partitions
     # ========================================================
 
-    repair_silver = BashOperator(
-        task_id="repair_silver_partitions",
+    repair_silver_ports = BashOperator(
+        task_id="repair_silver_ports_partitions",
         bash_command=ssh_command(
             "hive -e "
             "\"MSCK REPAIR TABLE silver.ports; "
             "SELECT COUNT(*) FROM silver.ports;\""
+        ),
+    )
+
+    repair_silver_vessels = BashOperator(
+        task_id="repair_silver_vessels_partitions",
+        bash_command=ssh_command(
+            "hive -e "
+            "\"MSCK REPAIR TABLE silver.vessels; "
+            "SELECT COUNT(*) FROM silver.vessels;\""
         ),
     )
 
@@ -113,17 +137,34 @@ with DAG(
         ),
     )
 
+    gold_vessels = BashOperator(
+        task_id="gold_vessels_etl",
+        bash_command=ssh_command(
+            "spark-submit "
+            "/gold_scripts/Spark_job/Vessels_to_gold.py"
+        ),
+    )
+
 
     # ========================================================
     # 5. Gold Validation
     # ========================================================
 
-    validate_gold = BashOperator(
-        task_id="validate_gold",
+    validate_gold_ports = BashOperator(
+        task_id="validate_gold_ports",
         bash_command=ssh_command(
             "hive -e "
             "\"MSCK REPAIR TABLE gold.ports; "
             "SELECT COUNT(*) FROM gold.ports;\""
+        ),
+    )
+
+    validate_gold_vessels = BashOperator(
+        task_id="validate_gold_vessels",
+        bash_command=ssh_command(
+            "hive -e "
+            "\"MSCK REPAIR TABLE gold.vessels; "
+            "SELECT COUNT(*) FROM gold.vessels;\""
         ),
     )
 
@@ -135,7 +176,15 @@ with DAG(
     (
         bronze_ports
         >> silver_ports
-        >> repair_silver
+        >> repair_silver_ports
         >> gold_ports
-        >> validate_gold
+        >> validate_gold_ports
+    )
+
+    (
+        bronze_vessels
+        >> silver_vessels
+        >> repair_silver_vessels
+        >> gold_vessels
+        >> validate_gold_vessels
     )

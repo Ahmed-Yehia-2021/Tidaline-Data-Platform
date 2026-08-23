@@ -245,6 +245,56 @@ networks:
     name: tidaline-case-study-network
     driver: bridge
 
+  stream_cdc:
+    build:
+      context: .
+      dockerfile: dockerfile
+    container_name: stream_cdc
+    volumes:
+      - ./Spark_job:/spark_jobs:z
+    env_file:
+      - .env
+    depends_on:
+      kafka:
+        condition: service_healthy
+      itvdelab:
+        condition: service_started
+    command: >
+      bash -c "source /etc/profile &&
+      export HADOOP_HOME=/opt/hadoop &&
+      export PATH=$$HADOOP_HOME/bin:$$PATH &&
+      spark-submit 
+      --packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.3.0,net.snowflake:snowflake-jdbc:3.13.22,net.snowflake:spark-snowflake_2.12:2.11.0-spark_3.3 
+      /spark_jobs/ingest_snowflake.py"
+    restart: unless-stopped
+    networks:
+      - case-study-network
+
+  stream_risk:
+    build:
+      context: .
+      dockerfile: dockerfile
+    container_name: stream_risk
+    volumes:
+      - ./Spark_job:/spark_jobs:z
+    env_file:
+      - .env
+    depends_on:
+      kafka:
+        condition: service_healthy
+      itvdelab:
+        condition: service_started
+    command: >
+      bash -c "source /etc/profile &&
+      export HADOOP_HOME=/opt/hadoop &&
+      export PATH=$$HADOOP_HOME/bin:$$PATH &&
+      spark-submit 
+      --packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.3.0,net.snowflake:snowflake-jdbc:3.13.22,net.snowflake:spark-snowflake_2.12:2.11.0-spark_3.3 
+      /spark_jobs/risk_analysis.py"
+    restart: unless-stopped
+    networks:
+      - case-study-network
+
 volumes:
   kafka_kraft_data:
   postgres_data:

@@ -43,6 +43,10 @@ RUN mkdir -p /home/itversity/.ssh && \
     echo "StrictHostKeyChecking no" > /home/itversity/.ssh/config && \
     echo "UserKnownHostsFile /dev/null" >> /home/itversity/.ssh/config
 
+COPY airflow/itvdelab.key /tmp/itvdelab.key
+RUN ssh-keygen -y -f /tmp/itvdelab.key >> /home/itversity/.ssh/authorized_keys && \
+    rm /tmp/itvdelab.key
+
 WORKDIR /spark_jobs
 
 # ENTRYPOINT ["/usr/local/bin/start-hive.sh"]

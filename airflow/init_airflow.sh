@@ -8,6 +8,13 @@ until PGPASSWORD=airflow psql -h "cluster_util_db" -U "airflow" -d "airflow" -c 
 done
 
 
+# Fix SSH key permissions for Podman rootless execution
+mkdir -p /home/airflow/.ssh
+if [ -f /opt/airflow/keys/itvdelab.key ]; then
+    cp /opt/airflow/keys/itvdelab.key /home/airflow/.ssh/itvdelab.key
+    chmod 600 /home/airflow/.ssh/itvdelab.key
+fi
+
 # Initialize Airflow DB
 airflow db init
 

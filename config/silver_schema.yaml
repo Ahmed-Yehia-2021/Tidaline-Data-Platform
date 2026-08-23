@@ -669,7 +669,7 @@ sources:
       report_date:
         type: timestamp
         format: "%Y-%m-%d %H:%M:%S"
-        nullable: false
+        nullable: true
 
     partition_columns:
       snapshot_year: integer

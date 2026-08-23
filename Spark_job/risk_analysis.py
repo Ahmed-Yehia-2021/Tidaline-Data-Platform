@@ -85,26 +85,22 @@ haversine_udf = F.udf(haversine, DoubleType())
 # Load Ports from Snowflake
 # ============================================================================
 
-def load_ports_from_snowflake(spark):
-    """Load ports data from Snowflake DIM_PORT table."""
-    logger.info("Loading ports from Snowflake...")
+def load_ports_from_hdfs(spark):
+    """Load ports data from HDFS Gold Layer."""
+    logger.info("Loading ports from HDFS Gold Layer...")
     
     ports_df = (
         spark.read
-        .format("snowflake")
-        .options(**sfOptions)
-        .option("query", """
-            SELECT 
-                PORT_KEY,
-                LATITUDE AS port_latitude,
-                LONGITUDE AS port_longitude
-            FROM DIM_PORT
-        """)
-        .load()
+        .parquet("hdfs://itvdelab:9000/gold_layer/ports")
+        .select(
+            F.col("port_key").alias("PORT_KEY"),
+            F.col("latitude").alias("port_latitude"),
+            F.col("longitude").alias("port_longitude")
+        )
     )
     
     port_count = ports_df.count()
-    logger.info(f"Loaded {port_count} ports from Snowflake")
+    logger.info(f"Loaded {port_count} ports from HDFS")
     return ports_df
 
 # ============================================================================
@@ -125,10 +121,10 @@ logger.info("TidalLine - Earthquake-Port Risk Analysis Streaming")
 logger.info("=" * 60)
 
 # ============================================================================
-# Load Ports Data from Snowflake
+# Load Ports Data from HDFS
 # ============================================================================
 
-ports_df = load_ports_from_snowflake(spark)
+ports_df = load_ports_from_hdfs(spark)
 ports_df.cache()
 port_count = ports_df.count()
 logger.info(f"Cached {port_count} ports")

@@ -240,15 +240,8 @@ services:
     networks:
       - case-study-network
 
-networks:
-  case-study-network:
-    name: tidaline-case-study-network
-    driver: bridge
-
   stream_cdc:
-    build:
-      context: .
-      dockerfile: dockerfile
+    image: localhost/tidaline-case-study_itvdelab:latest
     container_name: stream_cdc
     volumes:
       - ./Spark_job:/spark_jobs:z
@@ -271,9 +264,7 @@ networks:
       - case-study-network
 
   stream_risk:
-    build:
-      context: .
-      dockerfile: dockerfile
+    image: localhost/tidaline-case-study_itvdelab:latest
     container_name: stream_risk
     volumes:
       - ./Spark_job:/spark_jobs:z
@@ -294,6 +285,11 @@ networks:
     restart: unless-stopped
     networks:
       - case-study-network
+
+networks:
+  case-study-network:
+    name: tidaline-case-study-network
+    driver: bridge
 
 volumes:
   kafka_kraft_data:

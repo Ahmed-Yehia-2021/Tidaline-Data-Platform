@@ -52,7 +52,7 @@ default_args = {
 # ============================================================
 
 with DAG(
-    dag_id="batch_etl_pipeline",
+    dag_id="batch_dag",
     default_args=default_args,
     description="End-to-end Ports ETL: SFTP -> Bronze -> Silver -> Gold",
     start_date=datetime(2026, 8, 1),
@@ -109,7 +109,7 @@ with DAG(
     repair_silver_ports = BashOperator(
         task_id="repair_silver_ports_partitions",
         bash_command=ssh_command(
-            "hive -e "
+            "hive --hiveconf fs.defaultFS=hdfs://itvdelab:9000 -e "
             "\"MSCK REPAIR TABLE silver.ports; "
             "SELECT COUNT(*) FROM silver.ports;\""
         ),
@@ -118,7 +118,7 @@ with DAG(
     repair_silver_vessels = BashOperator(
         task_id="repair_silver_vessels_partitions",
         bash_command=ssh_command(
-            "hive -e "
+            "hive --hiveconf fs.defaultFS=hdfs://itvdelab:9000 -e "
             "\"MSCK REPAIR TABLE silver.vessels; "
             "SELECT COUNT(*) FROM silver.vessels;\""
         ),
@@ -153,7 +153,7 @@ with DAG(
     validate_gold_ports = BashOperator(
         task_id="validate_gold_ports",
         bash_command=ssh_command(
-            "hive -e "
+            "hive --hiveconf fs.defaultFS=hdfs://itvdelab:9000 -e "
             "\"MSCK REPAIR TABLE gold.ports; "
             "SELECT COUNT(*) FROM gold.ports;\""
         ),
@@ -162,7 +162,7 @@ with DAG(
     validate_gold_vessels = BashOperator(
         task_id="validate_gold_vessels",
         bash_command=ssh_command(
-            "hive -e "
+            "hive --hiveconf fs.defaultFS=hdfs://itvdelab:9000 -e "
             "\"MSCK REPAIR TABLE gold.vessels; "
             "SELECT COUNT(*) FROM gold.vessels;\""
         ),

@@ -1,0 +1,21 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+
+# Airflow
+/airflow/logs/
+/airflow/itvdelab.key
+
+# Logs
+*.log
+
+# Local data
+batch/data/
+
+# Environment
+.env
+.env.*
+
+# Temporary Office files
+~$*

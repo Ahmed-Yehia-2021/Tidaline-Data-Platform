@@ -245,6 +245,7 @@ services:
     container_name: stream_cdc
     volumes:
       - ./Spark_job:/spark_jobs:z
+      - ./utilities:/utilities:z
     env_file:
       - .env
     depends_on:
@@ -257,7 +258,7 @@ services:
       export HADOOP_HOME=/opt/hadoop &&
       export PATH=$$HADOOP_HOME/bin:$$PATH &&
       spark-submit 
-      --packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.3.0,net.snowflake:snowflake-jdbc:3.13.22,net.snowflake:spark-snowflake_2.12:2.11.0-spark_3.3 
+      --packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.2.4,net.snowflake:snowflake-jdbc:3.13.22,net.snowflake:spark-snowflake_2.12:2.15.0-spark_3.2 
       /spark_jobs/ingest_snowflake.py"
     restart: unless-stopped
     networks:
@@ -268,6 +269,7 @@ services:
     container_name: stream_risk
     volumes:
       - ./Spark_job:/spark_jobs:z
+      - ./utilities:/utilities:z
     env_file:
       - .env
     depends_on:
@@ -280,7 +282,7 @@ services:
       export HADOOP_HOME=/opt/hadoop &&
       export PATH=$$HADOOP_HOME/bin:$$PATH &&
       spark-submit 
-      --packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.3.0,net.snowflake:snowflake-jdbc:3.13.22,net.snowflake:spark-snowflake_2.12:2.11.0-spark_3.3 
+      --packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.2.4,net.snowflake:snowflake-jdbc:3.13.22,net.snowflake:spark-snowflake_2.12:2.15.0-spark_3.2 
       /spark_jobs/risk_analysis.py"
     restart: unless-stopped
     networks:

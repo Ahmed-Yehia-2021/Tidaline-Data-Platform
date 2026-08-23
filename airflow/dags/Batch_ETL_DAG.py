@@ -8,7 +8,7 @@ from airflow.operators.bash import BashOperator
 # Configuration
 # ============================================================
 
-SSH_KEY = "/tmp/itvdelab.key"
+SSH_KEY = "/home/airflow/.ssh/itvdelab.key"
 SSH_USER = "itversity"
 SSH_HOST = "itvdelab"
 
